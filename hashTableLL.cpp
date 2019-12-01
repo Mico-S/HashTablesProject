@@ -20,6 +20,7 @@ hashTableLL::hashTableLL(int bsize)
     table = new node*[tableSize];
     for(int i=0;i<bsize;i++)
         table[i] = nullptr;
+    numRecords = 0;
 }
 
 // Function to calculate index in the hash table for a given key
@@ -31,7 +32,7 @@ unsigned int hashTableLL::hashFunction1(int key)
 // Function to calculate index in the hash table for a given key
 unsigned int hashTableLL::hashFunction2(int key)
 {
-    return floor(key / tableSize);
+    return (int)floor(key / tableSize) % tableSize;
 }
 
 // Function to search for a key in the hash table and returns the node in
@@ -51,7 +52,7 @@ node* hashTableLL::searchItem(int key, int hashFunction)
 
     // Search the list at that specific index and return the node if found
     node* hashLLNode= table[index];
-    while(hashLLNode!= NULL && hashLLNode->key != key)
+    while(hashLLNode != NULL && hashLLNode->key != key)
     {
         hashLLNode= hashLLNode->next;
     }
@@ -59,8 +60,59 @@ node* hashTableLL::searchItem(int key, int hashFunction)
     return hashLLNode;
 }
 
-//TODO Complete this function
-//function to insert
+// Function that deletes a key in the hash table
+bool hashTableLL::deleteItem(int key, int hashFunction)
+{
+    // Compute the index by using either the 1st or 2nd hash function
+    int index;
+    if(hashFunction == 1)
+    {
+        index = hashFunction1(key);
+    }
+    else
+    {
+        index = hashFunction2(key);
+    }
+
+    // Search the list at that specific index and return the node if found
+    node* hashLLNode= table[index];
+    node* beforeLLNode = NULL;
+    while(hashLLNode != NULL && hashLLNode->key != key)
+    {
+        beforeLLNode = hashLLNode;
+        hashLLNode= hashLLNode->next;
+    }
+
+    if(hashLLNode != NULL)
+    {
+        // If the LL node is the head w/ no values after OR the tail of the LL
+        if(hashLLNode->next == NULL)
+        {
+            hashLLNode = NULL;
+            delete hashLLNode;
+        }
+        // If the LL Node is the head of the LL w/ values after
+        else if(hashLLNode == table[index])
+        {
+            table[index] = hashLLNode->next;
+            hashLLNode = NULL;
+            delete hashLLNode;
+        }
+        // If the LL Node is a value in the middle of the LL w/ nodes before & after it
+        else if(hashLLNode->next != NULL)
+        {
+            beforeLLNode->next = hashLLNode->next;
+            hashLLNode = NULL;
+            delete hashLLNode; 
+        }
+        numRecords--;
+        return true;
+    }
+
+    return false;
+}
+
+// Inserts a key into hash table
 bool hashTableLL::insertItem(int key, int hashFunction)
 {
     // Use the hash function on the key to get the index/slot,
@@ -79,6 +131,7 @@ bool hashTableLL::insertItem(int key, int hashFunction)
     if(table[index] == NULL)
     {
         table[index] = newNode;
+        numRecords++;
     }
     else
     {
@@ -91,7 +144,9 @@ bool hashTableLL::insertItem(int key, int hashFunction)
             hashLLNode= hashLLNode->next;
         }
         hashLLNode->next = newNode;
+        numRecords++;
     }
+    return true;
 }
 
 // Function to display hash table
@@ -113,3 +168,9 @@ void hashTableLL::printTable()
         cout << endl;
     }
  }
+
+// Function that returns the load factor
+double hashTableLL::loadFactor()
+{
+    return (numRecords / (double)tableSize);
+}
